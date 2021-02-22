@@ -1,0 +1,102 @@
+
+#include<bits/stdc++.h>
+using namespace std;
+
+struct point
+{
+    long long x,y;
+};
+
+bool cmpX(point a,point b)
+{
+    return a.x<b.x;
+}
+
+bool cmpY(point a,point b)
+{
+    return a.y<b.y;
+}
+
+long long dist(point a,point b)
+{
+    return (a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y);
+}
+
+long long brute(point P[],int n)
+{
+    long long mn=9ll*1e18;
+    for(int i=0;i<n;i++)
+    {
+        for(int j=i+1;j<n;j++)
+            mn=min(mn,dist(P[i],P[j]));
+    }
+    return mn;
+}
+
+long long Merge(point P[],int n,long long d)
+{
+    sort(P,P+n,cmpY);
+
+    long long mn=d;
+    for(int i=0;i<n;i++)
+    {
+        for(int j=i+1;j<n;j++)
+        {
+            long long x=dist(P[i],P[j]);
+            if(x>=mn) break;
+            mn=min(mn,x);
+        }
+    }
+    return mn;
+}
+
+long long DAC(point P[],int n)
+{
+    if(n<=3)
+        return brute(P,n);
+
+    int mid=n/2;
+    long long dl=DAC(P,mid);
+    long long dr=DAC(P+mid,n-mid);
+    long long d=min(dl,dr);
+
+    point midpoint=P[mid];
+    point po[n+1];
+    int j=0;
+    for(int i=0;i<n;i++)
+    {
+        if(abs(P[i].x-midpoint.x)<d)
+        {
+            po[j]=P[i];
+            j++;
+        }
+    }
+
+    return min(d,Merge(po,j,d));
+}
+
+long long closest(point P[],int n)
+{
+    sort(P,P+n,cmpX);
+    return DAC(P,n);
+}
+
+int main()
+{
+    point po[100010];
+    long long s;
+    int n;
+    scanf("%d",&n);
+    s=0;
+    for(int i=0;i<n;i++)
+    {
+        long long a;
+        scanf("%lld",&a);
+        s+=a;
+        po[i].x=1ll*i;
+        po[i].y=s;
+    }
+
+    printf("%lld\n",closest(po,n));
+    return 0;
+}

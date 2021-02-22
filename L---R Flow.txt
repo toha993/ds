@@ -1,0 +1,160 @@
+#include<bits/stdc++.h>
+#define fs first
+#define sc second
+using namespace std;
+ 
+ 
+const long long INF = 1e15;
+const int MAXN = 250;
+const int MAXM = 300000;
+int edges,src,snk;
+int last[MAXN],pre[MAXM],head[MAXM];
+long long Cap[MAXM],Flow[MAXM];
+int dist[MAXN];
+int nextEdge[MAXN];
+ 
+queue<int> Q;
+ 
+void init(int N)
+{
+    edges=0;
+    memset(last,-1,sizeof(int)*(N+1));
+}
+inline void addEdge(int u,int v,long long cap,long long flow)
+{
+    head[edges]=v;
+    pre[edges]=last[u];
+    Cap[edges]=cap;
+    Flow[edges]=flow;
+    last[u]=edges++;
+ 
+    head[edges]=u;
+    pre[edges]=last[v];
+    Cap[edges]=0;
+    Flow[edges]=0;
+    last[v]=edges++;
+}
+ 
+inline bool dinicBfs(int S,int E,int N)
+{
+    int from=S,to;
+    long long cap,flow;
+    memset(dist,0,sizeof(int)*(N+1));
+    dist[from]=1;
+    while(!Q.empty()) Q.pop();
+    Q.push(from);
+    while(!Q.empty())
+    {
+        from=Q.front();
+        Q.pop();
+        for(int e=last[from]; e>=0; e=pre[e])
+        {
+            to=head[e];
+            cap=Cap[e];
+            flow=Flow[e];
+            if(!dist[to] && cap>flow)
+            {
+                dist[to]=dist[from]+1;
+                Q.push(to);
+            }
+        }
+    }
+    return (dist[E]!=0);
+}
+ 
+inline long long dfs(int from,long long minEdge,int E)
+{
+    if(!minEdge) return 0;
+    if(from==E) return minEdge;
+    int to,e;
+    long long cap,flow,ret;
+    for(; nextEdge[from]>=0; nextEdge[from]=pre[e])
+    {
+        e=nextEdge[from];
+        to=head[e];
+        cap=Cap[e];
+        flow=Flow[e];
+        if(dist[to]!=dist[from]+1) continue;
+        ret=dfs(to,min(minEdge,cap-flow),E);
+        if(ret)
+        {
+            Flow[e]+=ret;
+            Flow[e^1]-=ret;
+            return ret;
+        }
+    }
+    return 0;
+}
+ 
+long long dinicUpdate(int S,int E)
+{
+    long long flow=0;
+    while(long long minEdge = dfs(S,INF,E))
+    {
+        if(minEdge==0) break;
+        flow+=minEdge;
+    }
+    return flow;
+}
+ 
+long long maxFlow(int S,int E,int N)
+{
+    long long totFlow=0;
+    while(dinicBfs(S,E,N))
+    {
+        for(int i=0; i<=N; i++) nextEdge[i]=last[i];
+        totFlow+=dinicUpdate(S,E);
+    }
+    return totFlow;
+}
+ 
+long long lo[MAXM],deg[MAXN];
+int id[MAXM];
+ 
+int main()
+{
+    int t,n,m;
+    scanf("%d",&t);
+    for(int f=1; f<=t; f++)
+    {
+        scanf("%d %d",&n,&m);
+        init(n+5);
+        memset(deg,0,sizeof(deg));
+        for(int i=1; i<=m; i++)
+        {
+            int x,y;
+            long long l,r;
+            scanf("%d %d %lld %lld",&x,&y,&l,&r);
+            deg[x]-=l;
+            deg[y]+=l;
+            lo[i]=l;
+            id[i]=edges;
+            addEdge(x,y,r-l,0);
+        }
+ 
+        long long sum=0;
+        for(int i=1; i<=n; i++)
+        {
+            if(deg[i]>=0)
+            {
+                sum+=deg[i];
+                addEdge(0,i,deg[i],0);
+            }
+            else
+                addEdge(i,n+1,-deg[i],0);
+        }
+        addEdge(n,1,INF,0);
+        long long mx=maxFlow(0,n+1,n+5);
+        printf("Case %d: ",f);
+        if(mx!=sum)
+            puts("no");
+        else
+        {
+            puts("yes");
+            for(int i=1; i<=m; i++)
+                printf("%lld\n",lo[i]+Flow[id[i]]);
+        }
+    }
+    return 0;
+}
+ 

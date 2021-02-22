@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+#define MAX 200010
+using namespace std;
+
+map<int,int>in;
+vector <int> G[MAX];
+int n,a,b,ar[MAX],ans[MAX];
+int dis[MAX], Q[MAX], parent[MAX], L[MAX], R[MAX];
+
+bool dfs(int i)
+{
+    int len = G[i].size();
+    for (int j = 0; j < len; j++)
+    {
+        int x = G[i][j];
+        if (L[x] == -1 || (parent[L[x]] == i))
+        {
+            if (L[x] == -1 || dfs(L[x]))
+            {
+                L[x] = i;
+                R[i] = x;
+                return (true);
+            }
+        }
+    }
+    return false;
+}
+
+bool bfs()
+{
+    int x, f = 0, l = 0;
+    memset(dis, -1, sizeof(dis));
+
+    for (int i = 1; i <= n; i++)
+    {
+        if (R[i] == -1)
+        {
+            Q[l++] = i;
+            dis[i] = 0;
+        }
+    }
+
+    while (f < l)
+    {
+        int i = Q[f++];
+        int len = G[i].size();
+        for (int j = 0; j < len; j++)
+        {
+            x = G[i][j];
+            if (L[x] == -1) return true;
+            else if (dis[L[x]] == -1)
+            {
+                parent[L[x]] = i;
+                dis[L[x]] = dis[i] + 1;
+                Q[l++] = L[x];
+            }
+        }
+    }
+    return false;
+}
+
+int hopcroft_karp()
+{
+    int counter = 0;
+    memset(L, -1, sizeof(L));
+    memset(R, -1, sizeof(R));
+
+    while (bfs())
+    {
+        for (int i = 1; i <= n; i++)
+        {
+            if (R[i] == -1 && dfs(i)) counter++;
+        }
+    }
+    return counter;
+}
+
+int main()
+{
+    scanf("%d %d %d",&n,&a,&b);
+    for(int i=1;i<=n;i++)
+        scanf("%d",&ar[i]),in[ar[i]]=i;
+    for(int i=1;i<=n;i++)
+    {
+        int x=ar[i];
+        int y=a-ar[i];
+        if(in[y])
+            G[i].push_back(in[y]);
+        y=b-ar[i];
+        if(in[y])
+            G[i].push_back(in[y]);
+    }
+    int x=hopcroft_karp();
+    if(x!=n)
+    {
+        puts("NO");
+        return 0;
+    }
+    puts("YES");
+    for(int i=1;i<=n;i++)
+    {
+        x=R[i];
+        if(ar[x]+ar[i]==b)
+            ans[i]=1;
+    }
+    for(int i=1;i<=n;i++)
+        printf("%d ",ans[i]);
+    puts("");
+    return 0;
+}

@@ -1,0 +1,108 @@
+#include<bits/stdc++.h>
+#define N 100010
+using namespace std;
+vector<int>adj[N],disv[N];
+int dis[N];
+
+int totchain,indx;
+int chainno[N],chainhead[N],posinbase[N],base[N];
+int depth[N],sz[N],son[N],prnt[N];
+void reset(int num)
+{
+    indx=0;
+    totchain=1;
+    for(int i=0; i<=num; i++)
+    {
+        adj[i].clear();
+        disv[i].clear();
+        chainhead[i]=son[i]=-1;
+    }
+}
+void dfs(int u,int pre)
+{
+    prnt[u]=pre;
+    int mx=-1;
+    sz[u]=1;
+    for(int i=0; i<adj[u].size(); i++)
+    {
+        int v=adj[u][i];
+        if(v==pre) continue;
+
+        dis[v]=dis[u]+disv[u][i];
+        depth[v]=depth[u]+1;
+        dfs(v,u);
+        sz[u]+=sz[v];
+        if(sz[v]>mx)
+        {
+            mx=sz[v];
+            son[u]=v;
+        }
+    }
+    return;
+}
+void HLD(int u,int pre)
+{
+    if(chainhead[totchain]==-1)
+        chainhead[totchain]=u;
+
+    chainno[u]=totchain;
+    posinbase[u]=++indx;
+    base[indx]=u;
+    if(son[u]==-1) return;
+    HLD(son[u],u);
+    for(int i=0; i<adj[u].size(); i++)
+    {
+        int v=adj[u][i];
+        if(v==pre || v==son[u]) continue;
+        totchain++;
+        HLD(v,u);
+    }
+    return;
+}
+
+int LCA(int a, int b)
+{
+    while(chainno[a] != chainno[b])
+    {
+        if(depth[chainhead[ chainno[a] ]] < depth[chainhead[ chainno[b] ]])
+            b=prnt[chainhead[chainno[b]]];
+        else
+            a=prnt[chainhead[chainno[a]]];
+    }
+    if(depth[a]<depth[b])
+        return a;
+    return b;
+}
+
+int main()
+{
+    int t,n,q;
+    scanf("%d",&t);
+    while(t--)
+    {
+        scanf("%d %d",&n,&q);
+        reset(n+5);
+        for(int i=1; i<=n-1; i++)
+        {
+            int x,y,w;
+            scanf("%d %d %d",&x,&y,&w);
+            adj[x].push_back(y);
+            adj[y].push_back(x);
+            disv[x].push_back(w);
+            disv[y].push_back(w);
+        }
+
+        depth[1]=dis[1]=0;
+        dfs(1,0);
+        HLD(1,0);
+
+        while(q--)
+        {
+            int x,y,lca;
+            scanf("%d %d",&x,&y);
+            lca=LCA(x,y);
+            printf("%d\n",dis[x]+dis[y]-2*dis[lca]);
+        }
+    }
+    return 0;
+}

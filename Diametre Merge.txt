@@ -1,0 +1,161 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int mx=1000050,mxl=21;
+
+vector<int>g[mx];
+int rmq[mxl][mx+mx];
+int fst[mx],lst[mx];
+int lyr[mx];
+int dep[mx];
+vector<int>eul;
+
+void dfs(int u,int pu)
+{
+    eul.push_back(u);
+    for(int i=0; i<int(g[u].size()); i++)
+    {
+        int v=g[u][i];
+        if(v!=pu)
+        {
+            lyr[v]=1+lyr[u];
+            dep[v]=dep[u]+1;
+            dfs(v,u);
+            eul.push_back(u);
+        }
+    }
+}
+int minimo(int l,int r)
+{
+    int len=32-__builtin_clz(r-l+1)-1;
+    int x=rmq[len][l];
+    int y=rmq[len][r-(1<<len)+1];
+    if(lyr[x]<lyr[y])return x;
+    return y;
+}
+int lca(int u,int v)
+{
+    if(lst[u]>lst[v])swap(u,v);
+    int from=lst[u];
+    int to=fst[v];
+    if(from>to)to=lst[v];
+    return minimo(from,to);
+}
+
+struct diameter
+{
+    int t[2];
+    int l;
+    bool operator <(diameter d)const
+    {
+        return l<d.l;
+    }
+} diam[mx];
+diameter join(diameter a,diameter b)
+{
+    diameter ans=max(a,b);
+    for(int i=0; i<2; i++)
+    {
+        for(int j=0; j<2; j++)
+        {
+            int u=a.t[i];
+            int v=b.t[j];
+            int z=lca(u,v);
+            int len=dep[u]+dep[v]-2ll*dep[z];
+            ans=max(ans, {u,v,len});
+        }
+    }
+    return ans;
+}
+
+int p[mx];
+int gp(int u)
+{
+    return (u==p[u]?u:p[u]=gp(p[u]));
+}
+
+int ar[mx];
+int main()
+{
+    int q,n;
+    scanf("%d",&q);
+    for(int i=1; i<4; i++)
+    {
+        g[0].push_back(i);
+        g[i].push_back(0);
+    }
+    n=3;
+    for(int i=1; i<=q; i++)
+    {
+        scanf("%d",&ar[i]);
+        ar[i]--;
+        g[ar[i]].push_back(++n);
+        g[n].push_back(ar[i]);
+        g[ar[i]].push_back(++n);
+        g[n].push_back(ar[i]);
+    }
+    for(int i=0; i<n; i++)
+        fst[i]=lst[i]=-1;
+    dfs(0,0);
+    int es=eul.size();
+    for(int i=0; i<es; i++)
+    {
+        int ei=eul[i];
+        rmq[0][i]=ei;
+        if(fst[ei]==-1)fst[ei]=i;
+        lst[ei]=i;
+    }
+    for(int l=1; l<mxl; l++)
+    {
+        for(int i=0; i<es; i++)
+        {
+            rmq[l][i]=rmq[l-1][i];
+            int j=i+(1<<(l-1));
+            if(j<es && lyr[rmq[l-1][j]]<lyr[rmq[l][i]])
+                rmq[l][i]=rmq[l-1][j];
+        }
+    }
+
+    for(int i=0; i<=n; i++)
+    {
+        p[i]=i;
+        diam[i]= {{i,i},0};
+    }
+    for(int i=1; i<4; i++)
+    {
+        int paru=gp(0);
+        int parv=gp(i);
+        if(paru!=parv)
+        {
+            p[parv]=paru;
+            diameter d=join(diam[paru],diam[parv]);
+            diam[paru]=d;
+        }
+    }
+    n=3;
+    for(int i=1; i<=q; i++)
+    {
+        int u=ar[i];
+        int v=++n;
+        int paru=gp(u);
+        int parv=gp(v);
+        if(paru!=parv)
+        {
+            p[parv]=paru;
+            diameter d=join(diam[paru],diam[parv]);
+            diam[paru]=d;
+        }
+
+        u=ar[i];
+        v=++n;
+        paru=gp(u);
+        parv=gp(v);
+        if(paru!=parv)
+        {
+            p[parv]=paru;
+            diameter d=join(diam[paru],diam[parv]);
+            diam[paru]=d;
+        }
+        printf("%d\n",diam[paru].l);
+    }
+    return 0;
+}

@@ -1,0 +1,85 @@
+#include<bits/stdc++.h>
+using namespace std;
+vector<int>adj[100010],edges[100010];
+int tim,disc[100010],low[100010],node,vis[100010],col[100010];
+stack<int>st;
+map< pair<int,int>, int >mp;
+int deg[100010];
+
+void dfs(int u,int p)
+{
+    disc[u]=low[u]=++tim;
+    vis[u]=1;
+    if(mp[make_pair(p,u)]>1) low[u]=disc[p];
+    st.push(u);
+    for(int v : adj[u])
+    {
+        if(v==p) continue;
+        if(!vis[v])
+        {
+            dfs(v,u);
+            low[u]=min(low[u],low[v]);
+        }
+        else low[u]=min(low[u],disc[v]);
+    }
+
+    if(low[u]==disc[u])
+    {
+        ++node;
+        while(st.top()!=u)
+        {
+            col[st.top()]=node;
+            st.pop();
+        }
+        col[u]=node;
+        st.pop();
+    }
+    return;
+}
+
+void clear(int n)
+{
+    node=0;
+    tim=0;
+    mp.clear();
+    for(int i=0;i<=n+2;i++)
+    {
+        adj[i].clear();
+        edges[i].clear();
+        vis[i]=0;
+        deg[i]=0;
+    }
+}
+
+int main()
+{
+    int n,m;
+    scanf("%d %d",&n,&m);
+    clear(n);
+    while(m--)
+    {
+        int x,y;
+        scanf("%d %d",&x,&y);
+        adj[x].push_back(y);
+        adj[y].push_back(x);
+        mp[make_pair(x,y)]++;
+        mp[make_pair(y,x)]++;
+    }
+    for(int i=1;i<=n;i++)
+    {
+        if(!vis[i]) dfs(i,0);
+    }
+
+    for(int i=1;i<=n;i++)
+    {
+        for(int v : adj[i])
+        {
+            if(col[i]!=col[v])
+            {
+                edges[col[i]].push_back(col[v]);
+            }
+        }
+    }
+
+    return 0;
+}
